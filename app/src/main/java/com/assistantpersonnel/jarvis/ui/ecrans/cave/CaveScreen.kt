@@ -1,4 +1,4 @@
-package com.example.jarvisassistant.ui.ecrans.cave
+package com.assistantpersonnel.jarvis.ui.ecrans.cave
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,8 +9,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.jarvisassistant.ui.composants.cave.CarteProduit
-import com.example.jarvisassistant.vueModele.CaveVM
+import com.assistantpersonnel.jarvis.ui.composants.cave.CarteProduit
+import com.assistantpersonnel.jarvis.vueModele.CaveVM
 
 class CaveScreen {
 
