@@ -49,6 +49,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")// OkHttp3 pour les requêtes réseau
+    implementation("com.squareup.okhttp3:okhttp-urlconnection:4.12.0") // Pour les extensions Kotlin (toRequestBody, etc.)
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

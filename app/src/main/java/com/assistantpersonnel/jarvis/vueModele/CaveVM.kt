@@ -1,6 +1,6 @@
-package com.example.jarvisassistant.vueModele
+package com.assistantpersonnel.jarvis.vueModele
 
-import com.example.jarvisassistant.modele.ProduitCave
+import com.assistantpersonnel.jarvis.modele.ProduitCave
 import java.time.LocalDate
 
 // ViewModel fictif qui fournit une liste d'objets de cave
