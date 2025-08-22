@@ -1,4 +1,4 @@
-package com.example.jarvisassistant.modele
+package com.assistantpersonnel.jarvis.modele
 
 import java.time.LocalDate
 
