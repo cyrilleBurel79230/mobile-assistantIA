@@ -1,4 +1,4 @@
-package com.example.jarvisassistant.ui.theme
+package com.assistantpersonnel.jarvis.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
