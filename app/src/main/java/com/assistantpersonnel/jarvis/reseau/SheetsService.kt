@@ -9,16 +9,15 @@ import java.io.IOException
 
 // Service pour envoyer les données vers Google Sheets via HTTP POST
 object SheetsService {
-    fun envoyer(payload: SheetsPayload, onSuccess: () -> Unit, onError: (Throwable) -> Unit) {
+    fun envoyer(url: String, payload: SheetsPayload, onSuccess: () -> Unit, onError: (Throwable) -> Unit) {
         val json = JSONObject().apply {
-            put("module", payload.module)
             put("ligne", JSONArray(payload.ligne))
         }
 
         val requestBody = json.toString().toRequestBody("application/json".toMediaType())
 
         val request = Request.Builder()
-            .url(SheetsEndpoints.URL_GLOBAL)
+            .url(url)
             .post(requestBody)
             .build()
 
@@ -32,4 +31,5 @@ object SheetsService {
             }
         })
     }
+
 }

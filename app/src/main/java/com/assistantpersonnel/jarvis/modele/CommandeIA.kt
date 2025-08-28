@@ -10,5 +10,5 @@ data class CommandeIA(
 )
 
 enum class ContexteIA {
-    CAVE, JARDIN, SANTE, GENERAL
+    CAVE,METEO,MAISON,PLANNING, JARDIN, SANTE,MAIL, GENERAL, INCONNU
 }
