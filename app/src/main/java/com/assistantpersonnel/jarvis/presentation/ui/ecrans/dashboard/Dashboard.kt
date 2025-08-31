@@ -13,6 +13,7 @@ import com.assistantpersonnel.jarvis.presentation.ui.composants.BarreVocaleJarvi
 import com.assistantpersonnel.jarvis.presentation.ui.composants.CarteIA
 import com.assistantpersonnel.jarvis.presentation.ui.composants.dashboard.CarteSection
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.assistantpersonnel.jarvis.presentation.viewmodel.HistoriqueIAViewModel
 import com.assistantpersonnel.jarvis.presentation.viewmodel.JarvisViewModel
 
@@ -29,20 +30,23 @@ fun EcranDashboard() {
     val historiqueVM: HistoriqueIAViewModel = viewModel()
     val jarvisVM: JarvisViewModel = viewModel()
 
+
     Column(modifier = Modifier.fillMaxSize()) {
         // Barre vocale en haut
+        /*
         BarreVocaleJarvis(
             historiqueVM = historiqueVM,
             jarvisVM = jarvisVM,
             commandeReconnue = commande,
             reponseIA = historiqueVM.reponseIA,
             contexteIA = historiqueVM.contexteIA,
+
             onMicroClicked = {
                 val texte = "Ajoute une bouteille de Château Margaux 2015"
                // historiqueVM.traiterCommande(texte)
             }
 
-        )
+        )*/
 
         // Contenu principal du dashboard
         LazyColumn(modifier = Modifier.weight(1f)) {

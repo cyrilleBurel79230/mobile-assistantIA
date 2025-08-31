@@ -15,17 +15,45 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.navigation.NavHostController
 import com.assistantpersonnel.jarvis.modele.ContexteIA
-import com.assistantpersonnel.jarvis.presentation.viewmodel.HistoriqueIAViewModel
+//import com.assistantpersonnel.jarvis.presentation.viewmodel.HistoriqueIAViewModel
 import com.assistantpersonnel.jarvis.presentation.viewmodel.JarvisViewModel
+
+
+
+@Composable
+fun EcranJarvisAccueil(
+   // historiqueVM: HistoriqueIAViewModel,
+    jarvisVM: JarvisViewModel,
+    navController: NavHostController
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        // ... tes cartes de navigation
+
+        BarreVocaleJarvis(
+         //   historiqueVM = historiqueVM,
+            jarvisVM = jarvisVM,
+            navController = navController,
+            commandeReconnue = jarvisVM.commandeReconnue,
+            reponseIA = jarvisVM.reponseIA,
+            contexteIA = jarvisVM.contexteIA,
+            onMicroClicked = {
+            //    jarvisVM.lancerReconnaissanceVocale(navController)
+            }
+        )
+    }
+}
+
 
 @Composable
 fun BarreVocaleJarvis(
-    historiqueVM: HistoriqueIAViewModel, // ViewModel qui gère l’historique des commandes
+  //  historiqueVM: HistoriqueIAViewModel, // ViewModel qui gère l’historique des commandes
     jarvisVM: JarvisViewModel,
     commandeReconnue: String,            // Texte reconnu par la voix
     reponseIA: String,
     contexteIA: ContexteIA,
+    navController: NavHostController,
     onMicroClicked: () -> Unit           // Callback déclenché quand on clique sur le micro
 ) {
     // Animation de pulsation si Jarvis est en écoute
@@ -82,6 +110,8 @@ fun BarreVocaleJarvis(
                         //val reponse = traiterCommande(commande) // fonction à créer
                         //val contexte = extraireContexte(commande) // fonction à créer
                         //historiqueVM.ajouterCommande(commande, reponse, contexte)
+                        jarvisVM.traiterCommandeEtNaviguer(commandeReconnue, navController)
+
                         jarvisVM.arreterJarvis()
 
                     },

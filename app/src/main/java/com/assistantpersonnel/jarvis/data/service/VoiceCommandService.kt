@@ -3,18 +3,29 @@ package com.assistantpersonnel.jarvis.data.service
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Looper
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import androidx.core.os.postDelayed
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.logging.Handler
 import javax.inject.Inject
 
 class VoiceCommandService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
+    var isListening = false
 
-    fun startListening(onResult: (String) -> Unit) {
+    fun startListening(
+        onResult: (String) -> Unit,
+        canListen: () -> Boolean
+    ) {
+        if (isListening || !canListen()) return
+        isListening = true
+        Log.d("VoiceService", "🎧 Micro relancé")
+
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr-FR")
@@ -24,6 +35,8 @@ class VoiceCommandService @Inject constructor(
 
 
             override fun onResults(results: Bundle?) {
+                isListening = false
+
                 val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
                 Log.d("JarvisVoice", "🧠 Texte reconnu : $text")
 
@@ -31,10 +44,9 @@ class VoiceCommandService @Inject constructor(
             }
 
             override fun onError(error: Int) {
-                onResult("Erreur de reconnaissance vocale")
-                Log.e("JarvisVoice", "❌ Erreur de reconnaissance : $error")
-
-            }
+                isListening = false
+                Log.e("JarvisVoice", "❌ Erreur : $error")
+             }
 
             // Callbacks requis mais non utilisés ici
             override fun onReadyForSpeech(params: Bundle?) {
@@ -70,8 +82,11 @@ class VoiceCommandService @Inject constructor(
     }
 
     fun stopListening() {
-        recognizer?.stopListening()
-        recognizer?.cancel()
+        recognizer.stopListening()
+        recognizer.cancel()
+        isListening = false
+        Log.d("JarvisVoice", "🛑 Reconnaissance arrêtée")
+
     }
 
 }

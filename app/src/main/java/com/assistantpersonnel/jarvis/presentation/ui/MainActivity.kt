@@ -13,8 +13,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.core.app.ActivityCompat
-import com.assistantpersonnel.jarvis.presentation.ui.ecrans.dashboard.EcranDashboard
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+
+import com.assistantpersonnel.jarvis.presentation.ui.ecrans.EcranJarvisAccueil
+import com.assistantpersonnel.jarvis.presentation.ui.ecrans.cave.EcranCave
+
 import com.assistantpersonnel.jarvis.presentation.ui.theme.AssistantJarvisTheme
 import com.assistantpersonnel.jarvis.presentation.viewmodel.JarvisViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,14 +53,6 @@ class MainActivity : ComponentActivity() {
             100
         )
 
-        // Initialisation de la synthèse vocale
-        initTextToSpeech()
-
-        // Initialisation de la reconnaissance vocale
-        initSpeechRecognizer()
-
-        // Lancement de l'écoute vocale dès le démarrage
-        startListening()
 
         // Définition du contenu de l'activité avec Jetpack Compose
         setContent {
@@ -62,81 +61,25 @@ class MainActivity : ComponentActivity() {
                 // Surface = fond de l'écran avec la couleur du thème
                 Surface(color = MaterialTheme.colorScheme.background) {
                     // Affichage de l'écran principal : le Dashboard
-                    EcranDashboard()
+                    //EcranDashboard()
+                    JarvisApp(jarvisViewModel)
+
                 }
             }
         }
     }
+}
+@Composable
+fun JarvisApp(jarvisVM: JarvisViewModel) {
+    val navController = rememberNavController()
 
-    /**
-     * Initialise le moteur de synthèse vocale avec une voix grave et posée.
-     */
-    private fun initTextToSpeech() {
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                tts.language = Locale.FRANCE // Langue française
-                tts.setPitch(0.8f)           // Voix plus grave
-                tts.setSpeechRate(0.95f)     // Débit plus posé
-                tts.speak("Bonjour Cyrille. Jarvis est opérationnel.",
-                    TextToSpeech.QUEUE_FLUSH, null, "JARVIS_INIT")
-            }
+    NavHost(navController = navController, startDestination = "Accueil") {
+        composable("Accueil") {
+            EcranJarvisAccueil(jarvisVM = jarvisVM, navController = navController)
         }
-    }
-
-    /**
-     * Initialise le moteur de reconnaissance vocale.
-     */
-    private fun initSpeechRecognizer() {
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRANCE)
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Parlez, Cyrille. Jarvis vous écoute.")
-        }
-
-        // Définition du listener pour capter les résultats vocaux
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onResults(results: Bundle?) {
-                val command = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.get(0)
-                command?.let {
-                    //jarvisViewModel.handleVoiceCommand(it) // Envoie la commande au ViewModel
-                    jarvisViewModel.lancerReconnaissanceVocale(it) // Envoie la commande au ViewModel
-                }
-            }
-
-            // Callbacks requis mais non utilisés ici
-            override fun onReadyForSpeech(params: Bundle?) {}
-            override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {}
-            override fun onError(error: Int) {}
-            override fun onPartialResults(partialResults: Bundle?) {}
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
-    }
-
-    /**
-     * Démarre l'écoute vocale.
-     */
-    private fun startListening() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.FRANCE)
-        }
-        Log.d("MainActivity", "startListening")
-
-        speechRecognizer.startListening(intent)
-    }
-
-    /**
-     * Nettoyage des ressources vocales à la fermeture de l'activité.
-     */
-    override fun onDestroy() {
-        super.onDestroy()
-        tts.stop()
-        tts.shutdown()
-        speechRecognizer.destroy()
+        composable("cave") { EcranCave() }
+      //  composable("jardin") { EcranJardin() }
+      //  composable("sante") { EcranSante() }
+        // Ajoute d'autres écrans ici
     }
 }

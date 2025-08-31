@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.assistantpersonnel.jarvis.data.service.MistralService
 import com.assistantpersonnel.jarvis.data.service.TTSService
 import com.assistantpersonnel.jarvis.data.service.VoiceCommandService
@@ -14,6 +15,8 @@ import com.assistantpersonnel.jarvis.domain.utils.ContexteUtils
 import com.assistantpersonnel.jarvis.modele.ContexteIA
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -24,53 +27,130 @@ import javax.inject.Inject
 @HiltViewModel
 class JarvisViewModel @Inject constructor(
     private val voiceCommandService: VoiceCommandService,
-    private val ttsService: TTSService,
-    private val mistralService: MistralService,
-    private val contexteUtils: ContexteUtils
+    public val ttsService: TTSService,
+    val mistralService: MistralService,
+    val contexteUtils: ContexteUtils
 ) : ViewModel() {
     private var traitementJob: Job? = null
+
+    val isJarvisReady: StateFlow<Boolean> get() = ttsService.isJarvisReady
+
+    var isJarvisActif by mutableStateOf(true)
+    var isProcessing by mutableStateOf(false)
+
+    var hasWelcomed by mutableStateOf(false)
 
     var commandeReconnue by
     mutableStateOf("")
     var reponseIA by mutableStateOf("")
     var contexteIA by mutableStateOf(ContexteIA.INCONNU)
     // Fonction appelée quand Jarvis reçoit une commande vocale
-    fun lancerReconnaissanceVocale(textInput: String) {
-        // Appel à ton service vocal
-        // Supposons que voiceService.startListening() appelle ce callback :
-        Log.d("JarvisVM", "🎙️ Lancement de l’écoute vocale")
 
-        voiceCommandService.startListening { texte ->
-            commandeReconnue = texte
-            Log.d("JarvisVM", "🗣️ Commande reçue : $texte")
+   // fun speak(text: String) {
+   //     ttsService.speak(text)
+   // }
 
-            traitementJob =  viewModelScope.launch {
-                try {
-                    val reponse = mistralService.callIA(texte) // suspend function
-                    reponseIA = reponse
-                    Log.d("JarvisVM", "🧠 Réponse IA : $reponseIA")
+    private var isListening = false
 
-                    contexteIA = contexteUtils.extraireContexteAvecIA(texte)
-                    Log.d("JarvisVM", "📍 Contexte détecté : $contexteIA")
+    fun lancerReconnaissanceVocale(navController: NavHostController? = null) {
+        if (isListening) return
+        isListening = true
+        voiceCommandService.startListening(
+            onResult = { texte ->
+                isListening = false
+                traiterCommande(texte, navController)
+                       },
+            canListen = { !isProcessing }
+        )
+    }
 
-                    ttsService.speak(reponse)
-                    Log.d("JarvisVM", "🔊 Réponse prononcée")
 
-                    ajouterCommande(texte, reponse, contexteIA)
-                } catch (e: Exception) {
-                    Log.e("JarvisVM", "❌ Erreur IA : ${e.message}")
-                    reponseIA = "Je n'ai pas pu traiter la commande."
+    private fun traiterCommande(texte: String, navController: NavHostController?) {
+        if (texte.isBlank() || isProcessing) return
+
+        if (!isJarvisActif) {
+            isJarvisActif = true
+            ttsService.speak("Je suis de retour Cyrille. Je vous écoute.") {
+                lancerReconnaissanceVocale(navController)
+            }
+            return
+        }
+
+        if (texte.length < 4 || texte == commandeReconnue) {
+            lancerReconnaissanceVocale(navController)
+            return
+        }
+
+
+        isProcessing = true
+        commandeReconnue = texte
+
+        traitementJob = viewModelScope.launch {
+            try {
+                val reponse = mistralService.callIA(texte)
+                if (!isJarvisActif) return@launch
+
+                reponseIA = reponse
+                contexteIA = contexteUtils.extraireContexteAvecIA(texte)
+
+                ttsService.speak(reponse) {
+                    isProcessing = false
+                    lancerReconnaissanceVocale(navController)
+                }
+
+                navController?.let {
+                    when (contexteIA) {
+                        ContexteIA.CAVE -> it.navigate("cave")
+                        ContexteIA.JARDIN -> it.navigate("jardin")
+                        ContexteIA.SANTE -> it.navigate("sante")
+                        else -> {}
+                    }
+                }
+
+            } catch (e: Exception) {
+                reponseIA = "Je n'ai pas pu traiter la commande."
+                ttsService.speak(reponseIA) {
+                    isProcessing = false
+                    lancerReconnaissanceVocale(navController)
+                }
+            }
+        }
+    }
+
+    fun traiterCommandeEtNaviguer(
+        commande: String,
+        navController: NavHostController
+    ) {
+        viewModelScope.launch {
+            val contexte = contexteUtils.extraireContexteAvecIA(commande)
+            when (contexte) {
+                ContexteIA.CAVE -> navController.navigate("cave")
+                ContexteIA.JARDIN -> navController.navigate("jardin")
+                ContexteIA.SANTE -> navController.navigate("sante")
+                ContexteIA.METEO -> navController.navigate("meteo")
+                ContexteIA.MAIL -> navController.navigate("mail")
+                ContexteIA.PLANNING -> navController.navigate("planning")
+                else -> {
+                    reponseIA = "Je n’ai pas compris le domaine. Veux-tu parler de ta cave, ton jardin ou ta santé ?"
                     ttsService.speak(reponseIA)
                 }
             }
         }
-
     }
     fun arreterJarvis() {
+        isJarvisActif = false
         traitementJob?.cancel()
-        voiceCommandService.stopListening()
         ttsService.stopSpeaking()
-        Log.d("JarvisVM", "🛑 Jarvis arrêté")
+        // Jarvis reste à l’écoute
+        ttsService.speak("Très bien Cyrille, je me mets en veille. Je reste à l’écoute.") {
+            viewModelScope.launch {
+                lancerReconnaissanceVocale()
+            }
+        }
+
+        Log.d("JarvisVM", "🛌 Jarvis en sommeil léger")
+
+
     }
 
     fun ajouterCommande(commande: String, reponse: String, contexte: ContexteIA) {
